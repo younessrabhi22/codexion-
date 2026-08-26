@@ -1,3 +1,16 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   parser.c                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: yrabhi <yrabhi@student.1337.ma>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/08/25 02:18:29 by yrabhi            #+#    #+#             */
+/*   Updated: 2026/08/25 14:19:26 by yrabhi           ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+
 #include "codexion.h"
 
 int	is_valid_integer(char **str)
@@ -28,47 +41,44 @@ int	is_valid_integer(char **str)
 long	ft_atoi(char *str)
 {
 	long	i;
-	int		sign;
 	long	result;
 
 	i = 0;
-	sign = 1;
 	result = 0;
 
-	if (str[i] == '-' || str[i] == '+')
-	{
-		if (str[i] == '-')
-			sign = -1;
-		i++;
-	}
-	while (str[i] >= '0' && str[i] <= '9')
+    if (str[i] == '+')
+    i++;
+
+	while (str[i])
 	{
 		result = (result * 10) + (str[i] - '0');
-		if ((sign == 1 && result > 2147483647) || (sign == -1 && result > 2147483648))
+		if ((result > 2147483647))
 			return 2147483648;
 		i++;
 	}
-	return (result * sign);
+	return (result);
 }
 
 int    init_rules(t_rules *rules, char **argv)
 {
     int values[7];
     long tmp;
+    int i;
+
     tmp = 0;
-    int i = 0;
+    i = 1;
 
     if (!is_valid_integer(argv))
         return (0);
-    while (i < 7)
+    while (i <=7)
     {
-        tmp = ft_atoi(argv[i + 1]);
+        tmp = ft_atoi(argv[i]);
         if (tmp < 0 || tmp > INT_MAX)
             return (0);
-        values[i] = (int)tmp;
+        values[i - 1] = (int)tmp;
         i++;
     }
-    if (values[0] <= 0) /*the coders value should be positive*/
+    if (values[0] == 0) /*the coders value should be positive*/
 		return (0);
     rules->num_coders = values[0];
     rules->time_to_burnout = values[1];
