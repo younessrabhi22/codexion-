@@ -6,7 +6,7 @@
 /*   By: yrabhi <yrabhi@student.1337.ma>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/25 02:18:29 by yrabhi            #+#    #+#             */
-/*   Updated: 2026/08/25 14:19:26 by yrabhi           ###   ########.fr       */
+/*   Updated: 2026/08/28 09:16:33 by yrabhi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,7 +78,7 @@ int    init_rules(t_rules *rules, char **argv)
         values[i - 1] = (int)tmp;
         i++;
     }
-    if (values[0] == 0) /*the coders value should be positive*/
+    if (values[0] == 0)
 		return (0);
     rules->num_coders = values[0];
     rules->time_to_burnout = values[1];

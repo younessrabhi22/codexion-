@@ -3,7 +3,7 @@ CC      = cc
 CFLAGS  = -Wextra -Wall -Werror -pthread
 RM      = rm -f
 
-SRC     = main.c parser.c
+SRC     = main.c parser.c coder.c dongle.c utils.c
 OBJ     = $(SRC:.c=.o)
 
 all: $(NAME)
