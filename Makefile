@@ -1,12 +1,12 @@
 NAME    = codexion
 CC      = cc
-CFLAGS  = -Wextra -Wall -Werror -pthread
+CFLAGS  = -Wall -Wextra -Werror -pthread
 RM      = rm -f
 
-SRC     = main.c parser.c monitor.c\
-		utils.c init.c cleaning.c\
-		routine.c routine_utils.c\
-		routine_utils2.c queue.c scheduler.c\
+SRC     = main.c parser.c monitor.c \
+          utils.c init.c cleaning.c \
+          routine.c routine_utils.c \
+          routine_utils2.c queue.c scheduler.c
 
 OBJ     = $(SRC:.c=.o)
 
@@ -26,4 +26,4 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all clean fclean re run
+.PHONY: all clean fclean re
