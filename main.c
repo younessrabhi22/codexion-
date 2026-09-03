@@ -6,59 +6,59 @@
 /*   By: yrabhi <yrabhi@student.1337.ma>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/25 02:18:18 by yrabhi            #+#    #+#             */
-/*   Updated: 2026/08/31 01:31:03 by yrabhi           ###   ########.fr       */
+/*   Updated: 2026/09/03 21:51:20 by yrabhi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-
-static int init_sim_state(t_simulation *sim)
+static int start_simulation(t_sim *sim)
 {
-    struct timeval tv;
+    int i;
+    pthread_t monitor_thread;
 
-    sim->stop = 0;
-    // sim->scheduler = NULL;
-    if (pthread_mutex_init(&sim->log_mutex, NULL) != 0)
-        return (0);
-    if (pthread_mutex_init(&sim->stop_mutex, NULL) != 0)
-        return (0);
-    gettimeofday(&tv, NULL);
-    sim->start_time_ms = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
-    return (1);
-}
+    sim->start_ts = get_now_ms();
+    sim->is_running = 1;
 
-static int init_simulation(t_simulation *sim, char **argv)
-{
-    if (!init_rules(&sim->rules, argv))
+    i = 0;
+    while (i < sim->rules.num_coders)
+    {
+        sim->coders[i].last_compile_ts = sim->start_ts;
+        if (pthread_create(&sim->coders[i].thread_id, NULL, coder_routine, &sim->coders[i]) != 0)
+            return (0);
+        i++;
+    }
+    if (pthread_create(&monitor_thread, NULL, monitor_routine, sim) != 0)
         return (0);
-    if (!init_dongles(sim))
-        return (0);
-    if (!init_coders(sim))
-        return (0);
-    if (!init_sim_state(sim))
-        return (0);
+    pthread_join(monitor_thread, NULL);
+    i = 0;
+    while (i < sim->rules.num_coders)
+    {
+        pthread_join(sim->coders[i].thread_id, NULL);
+        i++;
+    }
     return (1);
 }
 
 int main(int argc, char **argv)
 {
-    t_simulation *sim;
+    t_rules rules;
+    t_sim sim;
 
     if (argc != 9)
-        return (printf("Error\n"), 1);
-    sim = malloc(sizeof(t_simulation));
-    if (!sim)
-        return (printf("Error\n"), 1);
-    if (!init_simulation(sim, argv))
     {
-        free(sim);
-        return (printf("Error\n"), 1);
+        printf("Error: Invalid number of arguments\n");
+        return (1);
     }
-    printf("init ok, num_coders=%d, start_time=%ld, stop=%d\n",
-           sim->rules.num_coders, sim->start_time_ms, sim->stop);
-    free(sim->dongles);
-    free(sim->coders);
-    free(sim);
+    if (!init_rules(&rules, argv))
+        return (1);
+    if (!init_simulation(&sim, &rules))
+        return (1);
+    if (!start_simulation(&sim))
+    {
+        cleanup_simulation(&sim, sim.rules.num_coders);
+        return (1);
+    }
+    cleanup_simulation(&sim, sim.rules.num_coders);
     return (0);
 }

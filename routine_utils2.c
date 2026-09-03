@@ -1,28 +1,27 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   scheduler.c                                        :+:      :+:    :+:   */
+/*   routine_utils2.c                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: yrabhi <yrabhi@student.1337.ma>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/09/03 21:38:39 by yrabhi            #+#    #+#             */
-/*   Updated: 2026/09/03 21:38:45 by yrabhi           ###   ########.fr       */
+/*   Created: 2026/09/03 01:52:45 by yrabhi            #+#    #+#             */
+/*   Updated: 2026/09/03 21:39:59 by yrabhi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-
-
 #include "codexion.h"
 
-long	get_priority(t_coder *coder)
+void do_debug(t_coder *coder)
 {
-	long	value;
+    if (!print_status(coder->hub, coder->id, "is debugging"))
+        return;
+    smart_sleep(coder->hub, coder->hub->rules.time_debug);
+}
 
-	pthread_mutex_lock(&coder->hub->state_lock);
-	if (coder->hub->rules.sched_policy == EDF_SCHED)
-		value = coder->last_compile_ts + coder->hub->rules.time_burnout;
-	else
-		value = get_now_ms();
-	pthread_mutex_unlock(&coder->hub->state_lock);
-	return (value);
+void do_refactor(t_coder *coder)
+{
+    if (!print_status(coder->hub, coder->id, "is refactoring"))
+        return;
+    smart_sleep(coder->hub, coder->hub->rules.time_refactor);
 }

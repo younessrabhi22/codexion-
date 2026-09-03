@@ -1,82 +1,135 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   codexion.h                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: yrabhi <yrabhi@student.1337.ma>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/09/03 21:36:36 by yrabhi            #+#    #+#             */
+/*   Updated: 2026/09/03 21:47:22 by yrabhi           ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef CODEXION_H
-# define CODEXION_H
+#define CODEXION_H
 
-#include <sys/time.h>
-#include <limits.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <pthread.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <limits.h>
+#include <sys/time.h>
 
+#define FIFO_SCHED 0
+#define EDF_SCHED 1
+
+typedef struct s_sim t_sim;
+typedef struct s_coder t_coder;
+typedef struct s_dongle t_dongle;
 
 typedef struct s_rules
 {
     int num_coders;
-    int time_to_burnout;
-    int time_to_compile;
-    int time_to_debug;
-    int time_to_refactor;
-    int compiles_required;
-    int dongle_cooldown;
-    char *scheduler;
+    long time_burnout;
+    long time_compile;
+    long time_debug;
+    long time_refactor;
+    int req_compiles;
+    long cooldown_ms;
+    int sched_policy;
 } t_rules;
 
+typedef struct s_wait_node
+{
+    t_coder *coder;
+    long priority_val;
+} t_wait_node;
+
+typedef struct s_waitlist
+{
+    t_wait_node list[2];
+    int count;
+} t_waitlist;
+
+typedef struct s_dongle
+{
+    pthread_mutex_t lock;
+    pthread_cond_t cond_var;
+    int is_free;
+    long ready_at_ms;
+    t_waitlist waitlist;
+} t_dongle;
 
 typedef struct s_coder
 {
     int id;
-    struct s_dongle *left_dongle;
-    struct s_dongle *right_dongle;
-    pthread_t thread;
+    pthread_t thread_id;
+    pthread_cond_t local_cond;
+    long last_compile_ts;
     int compile_count;
-    long last_compile_start_ms;
-    struct s_simulation *sim;
+    t_dongle *dongle_left;
+    t_dongle *dongle_right;
+    t_sim *hub;
 } t_coder;
 
-
-typedef struct s_request
-{
-    t_coder *coder;
-    long priority;
-} t_request;
-
-
-typedef struct s_queue
-{
-    t_request requests[2];
-    int size;
-} t_queue;
-
-
-typedef struct s_dongle
-{
-    int id;
-    pthread_mutex_t mutex;
-    pthread_cond_t cond;
-    int is_free;
-    long free_since_ms;
-    t_queue waiters;
-} t_dongle;
-
-
-typedef struct s_simulation
+struct s_sim
 {
     t_rules rules;
+    long start_ts;
+    int is_running;
+    pthread_t monitor_id;
+    pthread_mutex_t state_lock;
+    pthread_mutex_t print_lock;
     t_coder *coders;
     t_dongle *dongles;
-    pthread_mutex_t log_mutex;
-    pthread_mutex_t stop_mutex;
-    int stop;
-    long start_time_ms;
-} t_simulation;
+    int monitor_created;
+    pthread_t monitor_thread_id;
+};
 
+/* parser.c */
+int init_rules(t_rules *rules, char **argv);
 
+/* init.c */
+int init_dongles(t_sim *sim);
+int init_coders(t_sim *sim);
+int init_simulation(t_sim *sim, t_rules *rules);
 
-int     init_rules(t_rules *rules ,char **argv);
-int     init_dongles(t_simulation *sim);
-int     init_coders(t_simulation *sim);
-long    get_now_ms(void);
-int take_dongle(t_coder *coder, t_dongle *dongle);
-void release_dongle(t_dongle *dongle);
+/* cleaning.c */
+void destroy_dongles(t_sim *sim, int i);
+void destroy_coders(t_sim *sim, int i);
+void cleanup_simulation(t_sim *sim, int threads_created);
+
+/* utils.c */
+long get_now_ms(void);
+int check_simulation_status(t_sim *sim);
+void *handle_single_coder(t_coder *coder);
+
+/* routine.c */
+void *coder_routine(void *arg);
+void smart_sleep(t_sim *sim, long time_to_sleep_ms);
+void release_dongle(t_dongle *dongle, t_sim *sim);
+void release_dongles(t_coder *coder);
+
+/* routine_utils.c */
+int get_dongle(t_coder *coder, t_dongle *dongle);
+int print_status(t_sim *sim, int id, char *msg);
+int take_dongles(t_coder *coder);
+
+/* routine_utils2.c */
+void do_debug(t_coder *coder);
+void do_refactor(t_coder *coder);
+
+/* scheduler.c */
+long get_priority(t_coder *coder);
+
+/* queue.c */
+void add_to_queue(t_waitlist *q, t_coder *coder, long priority);
+void remove_from_queue(t_waitlist *q);
+void remove_specific_from_queue(t_waitlist *q, int coder_id);
+
+/* monitor.c */
+void *monitor_routine(void *arg);
 
 #endif

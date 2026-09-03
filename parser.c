@@ -6,7 +6,7 @@
 /*   By: yrabhi <yrabhi@student.1337.ma>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/25 02:18:29 by yrabhi            #+#    #+#             */
-/*   Updated: 2026/08/28 09:16:33 by yrabhi           ###   ########.fr       */
+/*   Updated: 2026/09/03 02:31:04 by yrabhi           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,19 +81,22 @@ int    init_rules(t_rules *rules, char **argv)
     if (values[0] == 0)
 		return (0);
     rules->num_coders = values[0];
-    rules->time_to_burnout = values[1];
-    rules->time_to_compile = values[2];
-    rules->time_to_debug = values[3];
-    rules->time_to_refactor = values[4];
-    rules->compiles_required = values[5];
-    rules->dongle_cooldown = values[6];
+    rules->time_burnout = values[1];
+    rules->time_compile = values[2];
+    rules->time_debug = values[3];
+    rules->time_refactor = values[4];
+    rules->req_compiles = values[5];
+    rules->cooldown_ms = values[6];
 
     if (strcmp(argv[8], "fifo") == 0)
-        rules->scheduler = "fifo";
+        rules->sched_policy = FIFO_SCHED;
     else if (strcmp(argv[8], "edf") == 0)
-        rules->scheduler = "edf";
+        rules->sched_policy = EDF_SCHED;
     else
-        return 0;
+    {
+        printf("Error: Scheduler must be exactly 'fifo' or 'edf'\n");
+        return (0);
+    }
 
     return 1;
 }
